@@ -3,15 +3,95 @@
 
 #include <string.h>
 #include <ctype.h>
+#include <assert.h>
 
 #include "invertedIndex.h"
 
-// Functions for Part 1
+#define MAXCHAR 100
 
-/**
- * Normalises a given string. See the spec for details. Note: you should
- * modify the given string - do not create a copy of it.
- */
+//Normalises a given string
+char *normaliseWord(char *str);
+//create a set
+Set newSet();
+// create new inverted index node
+InvertedIndexBST newInvertedIndexNode(char *key);
+// create new fileList
+FileList newFileListNode(char *filename); 
+// search for key in the tree
+InvertedIndexBST findKeyRecur(char *key);
+
+int main(void) {
+    char *collectionFilename = "collection.txt";
+    
+}
+
+InvertedIndexBST generateInvertedIndex(char *collectionFilename) {
+    file *fp;
+    char str1[MAXCHAR], str2[MAXCHAR];
+    fp = fopen(collectionFilename, "r");
+    InvertedIndexBST rootRoot = newInvertedIndexNode("rootRoot");
+    while (fscanf(fp1, "%s", str1) != EOF) {
+        char *newstr1 = strdup(str1);
+        fp2 = fopen(newstr1, "r");
+        while (fscanf(fp2, "%s", str2) != EOF) {
+            char *newstr2 = strdup(str2);
+            if (rootRoot->right == NULL) {
+                rootRoot->right = newInvertedIndexNode (normaliseWord(newstr2)); 
+                rootRoot->right->FileList = newFileListNode (newstr1);              
+            } else {
+                InvertedIndexBST temp = findKeyRecur(rootRoot->right, newstr2);
+                if (temp == NULL) {
+                    InvertedInvertedBST node = newInvertedIndexNode(normaliseWord(newstr2));
+                    node->fileList = newFileListNode(newstr1);
+                    compareKey2insertRecur(rootRoot->right, node); 
+                } else {
+                    insertFileListNode(temp, newstr1);       
+                }
+            }
+        }
+        fclose(fp2);
+    }
+    flcose(fp1);
+    return rootRoot->right;
+}
+
+InvertedIndexBST findKeyRecur(char *key) {
+    int cmp = strcmp(key, node->word);
+    if (cmp == 0) {
+        return node;
+    } else if (cmp < 0) {
+        return findKeyRecur(node->left, key);
+    } else if (cmp > 0) {
+        return findKeyRecur(node->right, key);
+    }
+    return NULL;
+}
+
+FileList newFileListNode(char *filename) {
+    FileList node = malloc(sizeof(*node));
+    if (node == NULL) {
+        fprintf(stderr, "Insufficient memory!\n");
+        exit(EXIT_FAILURE);
+    }
+    node->filename = filename;
+    node->tf = 0; 
+    node->next = NULL;
+    return node;
+}
+
+InvertedIndexBST newInvertedIndexNode (char *key) {
+    InvertedIndexBST node = malloc(sizeof(*node));
+    if (node == NULL) {
+        fprintf(stderr, "Insufficient memory!\n");
+        exit(EXIT_FAILURE);
+    }
+    node->word = key;
+    node->fileList = NULL;
+    node->left = NULL;
+    node->right = NULL;
+    return node;
+}
+
 char *normaliseWord(char *str) {
     int i = 0;
     int lead = 0;
@@ -50,49 +130,15 @@ char *normaliseWord(char *str) {
     return str;
 }
 
-/**
- * This function opens the collection file with the given name, and then
- * generates an inverted index from those files listed in the collection
- * file,  as  discussed  in  the spec. It returns the generated inverted
- * index.
- */
-InvertedIndexBST generateInvertedIndex(char *collectionFilename) {
-
-}
-
-/**
- * Outputs  the  given inverted index to a file named invertedIndex.txt.
- * The output should contain one line per word, with the  words  ordered
- * alphabetically  in ascending order. Each list of filenames for a word
- * should be ordered alphabetically in ascending order.
-*/
 void printInvertedIndex(InvertedIndexBST tree) {
 
 }
 
-// Functions for Part-2
 
-/**
- * Returns  an  ordered list where each node contains a filename and the 
- * corresponding tf-idf value for a given searchWord. You only  need  to
- * include documents (files) that contain the given searchWord. The list
- * must  be  in  descending order of tf-idf value. If there are multiple
- * files with same  tf-idf  value,  order  them  by  their  filename  in
- * ascending order.
-*/
 TfIdfList calculateTfIdf(InvertedIndexBST tree, char *searchWord, int D) {
 
 }
 
-/**
- * Returns  an  ordered list where each node contains a filename and the
- * summation of tf-idf values of all the matching search words for  that
- * file.  You only need to include documents (files) that contain one or
- * more of the given search words. The list must be in descending  order
- * of summation of tf-idf values (tfIdfSum). If there are multiple files
- * with  the  same tf-idf sum, order them by their filename in ascending
- * order.
- */
 TfIdfList retrieve(InvertedIndexBST tree, char *searchWords[], int D) {
 
 }
