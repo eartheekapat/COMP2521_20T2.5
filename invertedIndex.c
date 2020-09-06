@@ -19,6 +19,8 @@ InvertedIndexBST newInvertedIndexNode(char *key);
 FileList newFileListNode(char *filename); 
 // search for key in the tree
 InvertedIndexBST findKeyRecur(char *key);
+// find the right position to insert node2 into the tree
+void compareKeyToInsertRecur(InvertedIndexBST node1, InvertedIndexBST node2);
 
 int main(void) {
     char *collectionFilename = "collection.txt";
@@ -53,6 +55,11 @@ InvertedIndexBST generateInvertedIndex(char *collectionFilename) {
     }
     flcose(fp1);
     return rootRoot->right;
+}
+
+void compareKeyToInsertRecur(InvertedIndexBST node1, InvertedIndexBST node2) {
+    int cmp = strcmp(node1->word, node2->word);
+    
 }
 
 InvertedIndexBST findKeyRecur(char *key) {
