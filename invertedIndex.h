@@ -20,21 +20,12 @@ struct InvertedIndexNode {
 };
 typedef struct InvertedIndexNode *InvertedIndexBST;
 
-struct SetRep {
-	int nelems;
-	InvertedIndexBST root;
-}; 
-typedef struct SetRep *Set;
-
 struct TfIdfNode {
 	char *filename;
 	double tfIdfSum; // tfidf sum value
 	struct TfIdfNode *next;
 };
 typedef struct TfIdfNode *TfIdfList;
-
-//create a set to store InvertedIndexBST formally
-Set newSet();
 
 // Functions for Part 1
 

@@ -1,69 +1,65 @@
 // COMP2521 Assignment 1
 // DO NOT MODIFY THIS FILE
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
 
 #include "invertedIndex.h"
 
-#define MAXCHAR 100
+#define MAX_CHAR 100
+#define MAX_WORD 1000
 
+
+char *myStrdup(const char *s1);
 //Normalises a given string
 char *normaliseWord(char *str);
-//create a set
-Set newSet();
 // create new inverted index node
 InvertedIndexBST newInvertedIndexNode(char *key);
 // create new fileList
 FileList newFileListNode(char *filename); 
 // search for key in the tree
-InvertedIndexBST findKeyRecur(char *key);
+InvertedIndexBST findKeyRecur(InvertedIndexBST node, char *key);
 // find the right position to insert node2 into the tree
-void compareKeyToInsertRecur(InvertedIndexBST node1, InvertedIndexBST node2);
+void cmp2insertRecur(InvertedIndexBST node1, InvertedIndexBST node2);
+// insert filename into the node->fileList in the right order
+void insertFileListNode (InvertedIndexBST node, char *filename);
+// Outputs the given inverted index to a file named invertedIndex.txt
+void printInvertedIndex(InvertedIndexBST tree); 
+// put the whole tree into array buffer
+int putTreeIntoArrayRecur (InvertedIndexBST t, char buffer[][MAX_CHAR], int nitem);
+// sort the array buffer in ascending lexicographical order
+void arraySortAscendLexi (char buffer[][MAX_CHAR], int i);
+// print into invertedindex.txt
+void loopThroughArrayNprintii (char buffer[][MAX_CHAR], int nitem, InvertedIndexBST node, FILE *fp);
+
+// print the whole tree 
+int printTreeRecur (InvertedIndexBST node);
 
 int main(void) {
-    char *collectionFilename = "collection.txt";
-    
+    char *collectionFileName = "collection.txt";
+    InvertedIndexBST tree = generateInvertedIndex (collectionFileName);
+    printInvertedIndex (tree);
+    return 0;
+}
+ 
+void printInvertedIndex(InvertedIndexBST tree) {
+    char buffer[MAX_WORD][MAX_CHAR];
+    int nitem = 0; 
+    nitem = putTreeIntoArrayRecur (tree, buffer, nitem);
+    arraySortAscendLexi (buffer, nitem);
+    FILE *fp = fopen ("invertedIndex.txt", "w");
+    loopThroughArrayNprintii (buffer, nitem, tree, fp);
 }
 
-InvertedIndexBST generateInvertedIndex(char *collectionFilename) {
-    file *fp;
-    char str1[MAXCHAR], str2[MAXCHAR];
-    fp = fopen(collectionFilename, "r");
-    InvertedIndexBST rootRoot = newInvertedIndexNode("rootRoot");
-    while (fscanf(fp1, "%s", str1) != EOF) {
-        char *newstr1 = strdup(str1);
-        fp2 = fopen(newstr1, "r");
-        while (fscanf(fp2, "%s", str2) != EOF) {
-            char *newstr2 = strdup(str2);
-            if (rootRoot->right == NULL) {
-                rootRoot->right = newInvertedIndexNode (normaliseWord(newstr2)); 
-                rootRoot->right->FileList = newFileListNode (newstr1);              
-            } else {
-                InvertedIndexBST temp = findKeyRecur(rootRoot->right, newstr2);
-                if (temp == NULL) {
-                    InvertedInvertedBST node = newInvertedIndexNode(normaliseWord(newstr2));
-                    node->fileList = newFileListNode(newstr1);
-                    compareKey2insertRecur(rootRoot->right, node); 
-                } else {
-                    insertFileListNode(temp, newstr1);       
-                }
-            }
-        }
-        fclose(fp2);
+
+InvertedIndexBST findKeyRecur(InvertedIndexBST node, char *key) {
+    if (node == NULL) {
+        return NULL;
     }
-    flcose(fp1);
-    return rootRoot->right;
-}
-
-void compareKeyToInsertRecur(InvertedIndexBST node1, InvertedIndexBST node2) {
-    int cmp = strcmp(node1->word, node2->word);
-    
-}
-
-InvertedIndexBST findKeyRecur(char *key) {
-    int cmp = strcmp(key, node->word);
+    int cmp = strcmp(node->word, key);
     if (cmp == 0) {
         return node;
     } else if (cmp < 0) {
@@ -72,6 +68,135 @@ InvertedIndexBST findKeyRecur(char *key) {
         return findKeyRecur(node->right, key);
     }
     return NULL;
+}
+
+void loopThroughArrayNprintii (char buffer[][MAX_CHAR], int nitem, InvertedIndexBST tree, FILE *fp) {
+    // find the smallest value in tree recursively
+    for (int k = 0; k < nitem; k++) {
+        InvertedIndexBST temp = findKeyRecur (tree, buffer[k]);
+        fprintf(fp, "%s ", temp->word);
+        FileList curr = temp->fileList;
+        while (curr != NULL) {
+            fprintf(fp, "%s ", curr->filename);
+            curr = curr->next;
+        }
+        fprintf(fp, "%c", '\n');
+    }
+}
+
+void arraySortAscendLexi (char buffer[][MAX_CHAR], int i) {
+    char temp [MAX_CHAR];
+    for (int k = 0; k < i; ++k) {
+            for (int j = k + 1; j < i; ++j) {
+                if (strcmp(buffer[k], buffer[j]) > 0) {
+                    strcpy(temp, buffer[k]);
+                    strcpy(buffer[k], buffer[j]);
+                    strcpy(buffer[j], temp);
+                }
+            }
+        }
+}
+
+int putTreeIntoArrayRecur (InvertedIndexBST t, char buffer[][MAX_CHAR], int nitem) {
+    strcpy(buffer[nitem], t->word);
+    nitem++;
+    if (t->left != NULL) {
+        nitem = putTreeIntoArrayRecur (t->left, buffer, nitem);
+    }
+    if (t->right != NULL) {
+        nitem = putTreeIntoArrayRecur (t->right, buffer, nitem);
+    }
+    if (t->left == NULL && t->right == NULL) {
+        return nitem;
+    }
+    return nitem;
+}
+
+InvertedIndexBST generateInvertedIndex (char *collectionFilename) {
+    FILE *fp1, *fp2;
+    char str1[MAX_CHAR], str2[MAX_CHAR];
+    fp1 = fopen(collectionFilename, "r");
+    InvertedIndexBST containRoot = newInvertedIndexNode("containRoot");
+    while (fscanf(fp1, "%s", str1) != EOF) {
+        char *newstr1 = myStrdup(str1);
+        fp2 = fopen(newstr1, "r");
+        while (fscanf(fp2, "%s", str2) != EOF) {
+            char *newstr2 = myStrdup(str2);
+            if (strcmp(normaliseWord(newstr2), "design") == 0) {}
+            if (containRoot->right == NULL) {
+                containRoot->right = newInvertedIndexNode (normaliseWord(newstr2)); 
+                containRoot->right->fileList = newFileListNode (newstr1);              
+            } else {
+                InvertedIndexBST temp = findKeyRecur(containRoot->right, newstr2);
+                if (temp == NULL) {
+                    InvertedIndexBST node = newInvertedIndexNode(normaliseWord(newstr2));
+                    node->fileList = newFileListNode(newstr1);
+                    cmp2insertRecur (containRoot->right, node); 
+                } else {
+                    insertFileListNode (temp, newstr1);       
+                }
+            }
+        }
+        fclose(fp2);
+    }
+    fclose(fp1);
+    return containRoot->right;
+}
+
+void insertFileListNode (InvertedIndexBST node, char *filename) {
+    //loop to find the right order 
+    FileList curr_prev, curr = node->fileList;
+    while (curr != NULL) {
+        // compare filename with the exist file name to insert in the right order
+        int cmp = strcmp (filename, curr->filename);
+        if (cmp == 0) {
+            // do sth in the future but now do nth
+            return;
+        } else if (cmp < 0) { // insert 
+            // check if the node to insert is the first node of the fileList
+            if (node->fileList == curr) {
+                FileList temp = node->fileList;
+                node->fileList = newFileListNode (filename);
+                node->fileList->next = temp;
+                return;
+            } else { // in the middle
+                curr_prev->next = newFileListNode (filename);
+                curr_prev->next->next = curr;
+                return;
+            }
+        } else if (cmp > 0) {
+            if (curr->next == NULL) {
+                curr->next = newFileListNode (filename);
+                return;
+            }
+        }
+        curr_prev = curr;
+        curr = curr->next;
+    }
+}
+
+
+void cmp2insertRecur (InvertedIndexBST node1, InvertedIndexBST node2) {
+    if (node1 == NULL) {
+        return;
+    } else {
+        int cmp = strcmp(node1->word, node2->word);
+        if (cmp < 0) {
+            if (node1->left == NULL) {
+                node1->left = node2;
+                return;
+            } else {
+                cmp2insertRecur (node1->left, node2);
+            }
+        } else if (cmp > 0) {
+            if (node1->right == NULL) {
+                node1->right = node2;
+                return;
+            } else {
+                cmp2insertRecur (node1->right, node2);
+            }
+        }
+    }
 }
 
 FileList newFileListNode(char *filename) {
@@ -137,15 +262,24 @@ char *normaliseWord(char *str) {
     return str;
 }
 
-void printInvertedIndex(InvertedIndexBST tree) {
+char *myStrdup(const char *s1) {
+  char *str;
+  size_t size = strlen(s1) + 1;
 
+  str = malloc(size);
+  if (str) {
+    memcpy(str, s1, size);
+  }
+  return str;
 }
 
-
-TfIdfList calculateTfIdf(InvertedIndexBST tree, char *searchWord, int D) {
-
-}
-
-TfIdfList retrieve(InvertedIndexBST tree, char *searchWords[], int D) {
-
+int printTreeRecur (InvertedIndexBST node) {
+    if (node == NULL) {
+        return 0;
+    } else {
+        printf("%s\n", node->word);
+        int goLeft = printTreeRecur (node->left); 
+        int goRight = printTreeRecur (node->right);
+        return goLeft + goRight;
+    }
 }
