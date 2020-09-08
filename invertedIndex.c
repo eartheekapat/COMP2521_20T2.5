@@ -42,8 +42,6 @@ void updateTf(InvertedIndexBST node, char *filename, int N);
 TfIdfList calculateTfIdf(InvertedIndexBST tree, char *searchWord, int D);
 // create Tfidf list
 TfIdfList newTfIdfList(char *filename);
-// some log test
-unsigned int Logn(unsigned int n, unsigned int r);
 // Returns  an  ordered list where each node contains a filename and the
 //summation of tf-idf values of all the matching search words for  that
 //file.
@@ -85,7 +83,7 @@ TfIdfList calculateTfIdf (InvertedIndexBST tree, char *searchWord, int D) {
     printf ("%lf\n", idf);
     // copy fileList to TfIdfList
     TfIdfList tfidfHead = newTfIdfList(searchNode->fileList->filename);
-    TfidfHead->tfIdfSum = searchNode->fileList->tf * idf;
+    tfidfHead->tfIdfSum = searchNode->fileList->tf * idf;
     TfIdfList TFcurr = tfidfHead;
     FileList FLcurr = searchNode->fileList->next;
     while (FLcurr != NULL) {
@@ -94,17 +92,16 @@ TfIdfList calculateTfIdf (InvertedIndexBST tree, char *searchWord, int D) {
         TFcurr = TFcurr->next;
         FLcurr = FLcurr->next;     
     }
-    tfidfDescendOrder (tfidfHead)
+    tfidfDescendOrder (tfidfHead);
     return tfidfHead;
 }
 
-void tfidfSortedDes (TfidfList head) {
-
+void tfidfSortedDes (TfIdfList head) {
+    TfIdfList bef_curr = head;
+    TfIdfList curr = head;
+    TfIdfList aft_curr = head->next;
+    
 }
-
-unsigned int Logn(unsigned int n, unsigned int r) { 
-    return log(n) / log(r); 
-} 
 
 double countFileName (FileList head) {
     double count = 0;
