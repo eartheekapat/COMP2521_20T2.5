@@ -42,10 +42,14 @@ void updateTf(InvertedIndexBST node, char *filename, int N);
 TfIdfList calculateTfIdf(InvertedIndexBST tree, char *searchWord, int D);
 // create Tfidf list
 TfIdfList newTfIdfList(char *filename);
+// sorted tfidf in the decend tfidf
+TfIdfList tfidfSortedDes (TfIdfList head);
+TfIdfList deleteTfIdfNode (TfIdfList node, TfIdfList head);
 // Returns  an  ordered list where each node contains a filename and the
 //summation of tf-idf values of all the matching search words for  that
 //file.
 TfIdfList retrieve(InvertedIndexBST tree, char *searchWords[], int D);
+TfIdfList findMinTfidf (TfIdfList head);
 
 // count document in collectionFileName
 int countDoc(char *filename);
@@ -70,6 +74,8 @@ int main(void) {
     return 0;
 }
 
+// TfIdfList retrieve(InvertedIndexBST tree, char *searchWords[], int D);
+
 // Returns  an  ordered list where each node contains a filename and the corresponding tf-idf value for a given searchWord
 TfIdfList calculateTfIdf (InvertedIndexBST tree, char *searchWord, int D) {
     InvertedIndexBST searchNode = findKeyRecur (tree, searchWord);
@@ -78,9 +84,7 @@ TfIdfList calculateTfIdf (InvertedIndexBST tree, char *searchWord, int D) {
     // so we have to calculate d -> counting number of filename presented in the fileList
     double d = countFileName (searchNode->fileList);
     double idf = log(d / D) * 0.434294481903;
-    printf ("%lf\n", d);
-    printf ("%d\n", D); 
-    printf ("%lf\n", idf);
+    // printf ("idf is %lf\n", idf);
     // copy fileList to TfIdfList
     TfIdfList tfidfHead = newTfIdfList(searchNode->fileList->filename);
     tfidfHead->tfIdfSum = searchNode->fileList->tf * idf;
@@ -92,15 +96,72 @@ TfIdfList calculateTfIdf (InvertedIndexBST tree, char *searchWord, int D) {
         TFcurr = TFcurr->next;
         FLcurr = FLcurr->next;     
     }
-    tfidfDescendOrder (tfidfHead);
+    TfIdfList sortedTfidfList = tfidfSortedDes (tfidfHead);
     return tfidfHead;
 }
 
-void tfidfSortedDes (TfIdfList head) {
-    TfIdfList bef_curr = head;
+TfIdfList tfidfSortedDes (TfIdfList head) {
+    // firstly, create a copy of tfidfList 
+    TfIdfList newHead = findMinTfidf (head);
+    // printf ("%s", newHead->filename);
+    TfIdfList copyHead = newTfIdfList (newHead->filename);
+    copyHead->tfIdfSum = newHead->tfIdfSum;
+    // head = deleteTfIdfNode (newHead, head);
+    // TfIdfList curr = copyHead;
+    // while (head != NULL) {
+    //     TfIdfList minNode = findMinTfidf (head);
+    //     curr->next = newTfIdfList (minNode->filename);
+    //     curr->next->tfIdfSum = minNode->tfIdfSum;
+    //     head = deleteTfIdfNode (minNode, head);
+    //     curr = curr->next;
+    // }
+    return copyHead; 
+}
+
+TfIdfList findMinTfidf (TfIdfList head) {
+    TfIdfList minTfidf = head;
     TfIdfList curr = head;
-    TfIdfList aft_curr = head->next;
-    
+    TfIdfList cmp = head;
+    while (curr != NULL) {
+        while (cmp != NULL) {
+            if (minTfidf > cmp) {
+                minTfidf = cmp->next;
+            }
+            cmp = cmp->next;
+        }
+        curr = curr->next;
+        cmp = curr;
+    }
+    return minTfidf;
+}
+
+
+TfIdfList deleteTfIdfNode (TfIdfList node, TfIdfList head) {
+    TfIdfList curr = head;
+    TfIdfList currPrev = head;
+    while (curr != NULL) {
+        // node to delete is the first node in the list
+        int cmp = strcmp (curr->filename, node->filename);
+        if (cmp == 0) {
+            if (curr == head) {
+                if (curr->next == NULL) {
+                    free (curr);
+                    return NULL;
+                }
+                head = head->next;
+                free (node);
+            } else if (curr->next == NULL) { // middle node
+                currPrev->next = NULL;
+                free (curr);
+            } else { // node in the middle
+                currPrev->next = curr->next;
+                free (curr);            
+            }
+        }
+        currPrev = curr;
+        curr = curr->next;
+    }
+    return head;
 }
 
 double countFileName (FileList head) {
@@ -135,10 +196,8 @@ TfIdfList newTfIdfList (char *filename) {
     node->next = NULL;
     return node;
 }
-
-// TfIdfList retrieve(InvertedIndexBST tree, char *searchWords[], int D);
  
- InvertedIndexBST generateInvertedIndex(char *collectionFilename) {
+InvertedIndexBST generateInvertedIndex(char *collectionFilename) {
     FILE *fp1, *fp2, *fp3, *fp4;
     char str1[MAX_CHAR], str2[MAX_CHAR], str3[MAX_CHAR], str4[MAX_CHAR];
     int wordCount[MAX_FILE];
