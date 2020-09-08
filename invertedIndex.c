@@ -6,6 +6,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
+#include <math.h>
 
 #include "invertedIndex.h"
 
@@ -36,30 +37,107 @@ void arraySortAscendLexi(char buffer[][MAX_CHAR], int i);
 // print into invertedindex.txt
 void loopThroughArrayNprintii(char buffer[][MAX_CHAR], int nitem, InvertedIndexBST node, FILE *fp);
 // update the value tf into the fileList
-void updateTf (InvertedIndexBST node, char *filename, int N);
+void updateTf(InvertedIndexBST node, char *filename, int N);
 // Returns  an  ordered list where each node contains a filename and the corresponding tf-idf value for a given searchWord
 TfIdfList calculateTfIdf(InvertedIndexBST tree, char *searchWord, int D);
+// create Tfidf list
+TfIdfList newTfIdfList(char *filename);
+// some log test
+unsigned int Logn(unsigned int n, unsigned int r);
 // Returns  an  ordered list where each node contains a filename and the
 //summation of tf-idf values of all the matching search words for  that
 //file.
 TfIdfList retrieve(InvertedIndexBST tree, char *searchWords[], int D);
 
-
+// count document in collectionFileName
+int countDoc(char *filename);
+// count fileName presented in the fileLIst
+double countFileName (FileList head);
+// print tfidfList
+void printTfIdfList (TfIdfList node);
+// print fileLIst of node
+void printFileList(InvertedIndexBST node); 
 // print the whole tree 
 int printTreeRecur(InvertedIndexBST node);
 
 int main(void) {
     char *collectionFileName = "collection.txt";
+    int numDoc = countDoc (collectionFileName);
     InvertedIndexBST tree = generateInvertedIndex(collectionFileName);
-    //printInvertedIndex(tree);
+    printInvertedIndex (tree);
+    TfIdfList testTfidf = calculateTfIdf(tree, "moon", numDoc);
+    printTfIdfList (testTfidf);
+    // InvertedIndexBST testBST = findKeyRecur (tree, "moon");
+    // printFileList (testBST);
     return 0;
 }
 
-// // Returns  an  ordered list where each node contains a filename and the corresponding tf-idf value for a given searchWord
-// TfIdfList calculateTfIdf(InvertedIndexBST tree, char *searchWord, int D) {
-    
-//     // return someOrderedList
-// }
+// Returns  an  ordered list where each node contains a filename and the corresponding tf-idf value for a given searchWord
+TfIdfList calculateTfIdf (InvertedIndexBST tree, char *searchWord, int D) {
+    InvertedIndexBST searchNode = findKeyRecur (tree, searchWord);
+    // calculate idf ; idf = log (d / D) ; d == number of file in which a word present
+    // D == number of filename in collection.txt
+    // so we have to calculate d -> counting number of filename presented in the fileList
+    double d = countFileName (searchNode->fileList);
+    double idf = log(d / D) * 0.434294481903;
+    printf ("%lf\n", d);
+    printf ("%d\n", D); 
+    printf ("%lf\n", idf);
+    // copy fileList to TfIdfList
+    TfIdfList tfidfHead = newTfIdfList(searchNode->fileList->filename);
+    TfidfHead->tfIdfSum = searchNode->fileList->tf * idf;
+    TfIdfList TFcurr = tfidfHead;
+    FileList FLcurr = searchNode->fileList->next;
+    while (FLcurr != NULL) {
+        TFcurr->next = newTfIdfList (FLcurr->filename);  
+        TFcurr->next->tfIdfSum = FLcurr->tf * idf;      
+        TFcurr = TFcurr->next;
+        FLcurr = FLcurr->next;     
+    }
+    tfidfDescendOrder (tfidfHead)
+    return tfidfHead;
+}
+
+void tfidfSortedDes (TfidfList head) {
+
+}
+
+unsigned int Logn(unsigned int n, unsigned int r) { 
+    return log(n) / log(r); 
+} 
+
+double countFileName (FileList head) {
+    double count = 0;
+    FileList curr = head;
+    while (curr != NULL) {
+        count++;
+        curr = curr->next;
+    }
+    return count;
+}
+
+int countDoc (char *filename) {
+    double numFile = 0;
+    char str[MAX_CHAR];
+    FILE *fp = fopen (filename, "r");
+    while (fscanf(fp, "%s", str) != EOF) {
+        numFile++;
+    }
+    fclose (fp);
+    return numFile;
+}
+
+TfIdfList newTfIdfList (char *filename) {
+    TfIdfList node = malloc(sizeof(*node));
+    if (node == NULL) {
+        fprintf(stderr, "Insufficient memory!\n");
+        exit(EXIT_FAILURE);
+    }
+    node->filename = filename;
+    node->tfIdfSum = 0; 
+    node->next = NULL;
+    return node;
+}
 
 // TfIdfList retrieve(InvertedIndexBST tree, char *searchWords[], int D);
  
@@ -74,13 +152,13 @@ int main(void) {
         int numWord = 0;
         numfile++;
         char *newstr1 = myStrdup(str1);
-        fp3 = fopen (newstr1, "r");
+        fp3 = fopen(newstr1, "r");
         while (fscanf(fp3, "%s", str3) != EOF) {
             numWord++;
         }
         wordCount[numfile-1] = numWord;
         fclose (fp3);
-        fp2 = fopen (newstr1, "r");
+        fp2 = fopen(newstr1, "r");
         while (fscanf(fp2, "%s", str2) != EOF) {
             char *newstr2 = myStrdup(str2);
             if (strcmp(normaliseWord(newstr2), "design") == 0) {}
@@ -94,16 +172,10 @@ int main(void) {
                     InvertedIndexBST node = newInvertedIndexNode(normaliseWord(newstr2));
                     node->fileList = newFileListNode(newstr1);
                     updateTf (node, newstr1, numWord);
-                    if (strcmp (node->word, "moon") == 0) {
-                        printf ("%lf\n", node->fileList->tf);
-                    }
                     cmp2insertRecur(containRoot->right, node); 
                 } else {
                     insertFileListNode(temp, newstr1, numWord);
-                    updateTf (temp, newstr1, numWord);
-                    if (strcmp (temp->word, "moon") == 0) {
-                        printf ("%lf\n", temp->fileList->next->tf);
-                    }
+                    updateTf(temp, newstr1, numWord);
                 }
             }
         }
@@ -113,11 +185,29 @@ int main(void) {
     return containRoot->right;
 }
 
-// N is the number of words in the file with filename
-void updateTf (InvertedIndexBST node, char *filename, int N) {
+void printTfIdfList (TfIdfList node) {
+    TfIdfList curr = node;
+    while (curr != NULL) {
+        printf("%s\n", curr->filename);
+        printf("%lf\n", curr->tfIdfSum);
+        curr = curr->next;
+    }
+}
+
+void printFileList(InvertedIndexBST node) {
     FileList curr = node->fileList;
     while (curr != NULL) {
-        if (strcmp (curr->filename, filename) == 0) {
+        printf("%s\n", curr->filename);
+        printf("%lf\n", curr->tf);
+        curr = curr->next;
+    }
+}
+
+// N is the number of words in the file with filename
+void updateTf(InvertedIndexBST node, char *filename, int N) {
+    FileList curr = node->fileList;
+    while (curr != NULL) {
+        if (strcmp(curr->filename, filename) == 0) {
             curr->tf = curr->tf / N;
             return;
         } 
@@ -229,7 +319,7 @@ int putTreeIntoArrayRecur(InvertedIndexBST t, char buffer[][MAX_CHAR], int nitem
 }
 
 
-void cmp2insertRecur (InvertedIndexBST node1, InvertedIndexBST node2) {
+void cmp2insertRecur(InvertedIndexBST node1, InvertedIndexBST node2) {
     if (node1 == NULL) {
         return;
     } else {
@@ -239,14 +329,14 @@ void cmp2insertRecur (InvertedIndexBST node1, InvertedIndexBST node2) {
                 node1->left = node2;
                 return;
             } else {
-                cmp2insertRecur (node1->left, node2);
+                cmp2insertRecur(node1->left, node2);
             }
         } else if (cmp > 0) {
             if (node1->right == NULL) {
                 node1->right = node2;
                 return;
             } else {
-                cmp2insertRecur (node1->right, node2);
+                cmp2insertRecur(node1->right, node2);
             }
         }
     }
@@ -264,7 +354,7 @@ FileList newFileListNode(char *filename) {
     return node;
 }
 
-InvertedIndexBST newInvertedIndexNode (char *key) {
+InvertedIndexBST newInvertedIndexNode(char *key) {
     InvertedIndexBST node = malloc(sizeof(*node));
     if (node == NULL) {
         fprintf(stderr, "Insufficient memory!\n");
@@ -316,23 +406,22 @@ char *normaliseWord(char *str) {
 }
 
 char *myStrdup(const char *s1) {
-  char *str;
-  size_t size = strlen(s1) + 1;
-
-  str = malloc(size);
-  if (str) {
-    memcpy(str, s1, size);
-  }
-  return str;
+    char *str;
+    size_t size = strlen(s1) + 1;
+    str = malloc(size);
+    if (str) {
+        memcpy(str, s1, size);
+    }
+    return str;
 }
 
-int printTreeRecur (InvertedIndexBST node) {
+int printTreeRecur(InvertedIndexBST node) {
     if (node == NULL) {
         return 0;
     } else {
         printf("%s\n", node->word);
-        int goLeft = printTreeRecur (node->left); 
-        int goRight = printTreeRecur (node->right);
+        int goLeft = printTreeRecur(node->left); 
+        int goRight = printTreeRecur(node->right);
         return goLeft + goRight;
     }
 }
