@@ -49,7 +49,7 @@ TfIdfList deleteTfIdfNode (TfIdfList node, TfIdfList head);
 //summation of tf-idf values of all the matching search words for  that
 //file.
 TfIdfList retrieve(InvertedIndexBST tree, char *searchWords[], int D);
-TfIdfList findMinTfidf (TfIdfList head);
+TfIdfList findMaxTfidf (TfIdfList head);
 
 // count document in collectionFileName
 int countDoc(char *filename);
@@ -69,12 +69,24 @@ int main(void) {
     printInvertedIndex (tree);
     TfIdfList testTfidf = calculateTfIdf(tree, "moon", numDoc);
     printTfIdfList (testTfidf);
-    // InvertedIndexBST testBST = findKeyRecur (tree, "moon");
-    // printFileList (testBST);
+    char *words[] = {"nasa", "mars", "earth", NULL};
+    TfIdfList list = retrieve (tree, words, numDoc);
     return 0;
 }
 
-// TfIdfList retrieve(InvertedIndexBST tree, char *searchWords[], int D);
+TfIdfList retrieve(InvertedIndexBST tree, char *searchWords[], int D) {
+    int numWord = 0;
+    int i = 0;
+    while (searchWords[i] != NULL) {
+        numWord++;
+        i++;
+    }
+    TfIdfList list = newTfIdfList ()
+    
+
+    // return someOrderedList
+}
+
 
 // Returns  an  ordered list where each node contains a filename and the corresponding tf-idf value for a given searchWord
 TfIdfList calculateTfIdf (InvertedIndexBST tree, char *searchWord, int D) {
@@ -84,7 +96,6 @@ TfIdfList calculateTfIdf (InvertedIndexBST tree, char *searchWord, int D) {
     // so we have to calculate d -> counting number of filename presented in the fileList
     double d = countFileName (searchNode->fileList);
     double idf = log(d / D) * 0.434294481903;
-    // printf ("idf is %lf\n", idf);
     // copy fileList to TfIdfList
     TfIdfList tfidfHead = newTfIdfList(searchNode->fileList->filename);
     tfidfHead->tfIdfSum = searchNode->fileList->tf * idf;
@@ -97,44 +108,26 @@ TfIdfList calculateTfIdf (InvertedIndexBST tree, char *searchWord, int D) {
         FLcurr = FLcurr->next;     
     }
     TfIdfList sortedTfidfList = tfidfSortedDes (tfidfHead);
-    return tfidfHead;
+    return sortedTfidfList;
 }
+
 
 TfIdfList tfidfSortedDes (TfIdfList head) {
     // firstly, create a copy of tfidfList 
-    TfIdfList newHead = findMinTfidf (head);
-    // printf ("%s", newHead->filename);
+    TfIdfList newHead = findMaxTfidf (head);
     TfIdfList copyHead = newTfIdfList (newHead->filename);
     copyHead->tfIdfSum = newHead->tfIdfSum;
-    // head = deleteTfIdfNode (newHead, head);
-    // TfIdfList curr = copyHead;
-    // while (head != NULL) {
-    //     TfIdfList minNode = findMinTfidf (head);
-    //     curr->next = newTfIdfList (minNode->filename);
-    //     curr->next->tfIdfSum = minNode->tfIdfSum;
-    //     head = deleteTfIdfNode (minNode, head);
-    //     curr = curr->next;
-    // }
+    head = deleteTfIdfNode (newHead, head);
+    TfIdfList curr = copyHead;
+    while (head != NULL) {
+        TfIdfList maxNode = findMaxTfidf (head);
+        curr->next = newTfIdfList (maxNode->filename);
+        curr->next->tfIdfSum = maxNode->tfIdfSum;
+        head = deleteTfIdfNode (maxNode, head);
+        curr = curr->next;
+    }
     return copyHead; 
 }
-
-TfIdfList findMinTfidf (TfIdfList head) {
-    TfIdfList minTfidf = head;
-    TfIdfList curr = head;
-    TfIdfList cmp = head;
-    while (curr != NULL) {
-        while (cmp != NULL) {
-            if (minTfidf > cmp) {
-                minTfidf = cmp->next;
-            }
-            cmp = cmp->next;
-        }
-        curr = curr->next;
-        cmp = curr;
-    }
-    return minTfidf;
-}
-
 
 TfIdfList deleteTfIdfNode (TfIdfList node, TfIdfList head) {
     TfIdfList curr = head;
@@ -150,18 +143,39 @@ TfIdfList deleteTfIdfNode (TfIdfList node, TfIdfList head) {
                 }
                 head = head->next;
                 free (node);
+                return head;
             } else if (curr->next == NULL) { // middle node
                 currPrev->next = NULL;
                 free (curr);
+                return head;
             } else { // node in the middle
                 currPrev->next = curr->next;
-                free (curr);            
+                free (curr);
+                return head;            
             }
         }
         currPrev = curr;
         curr = curr->next;
     }
     return head;
+}
+
+TfIdfList findMaxTfidf (TfIdfList head) {
+    TfIdfList curr = head;
+    TfIdfList cmp = head;
+    TfIdfList max = head;
+    while (cmp != NULL) {
+        if (max->tfIdfSum < cmp->tfIdfSum) {
+            max = cmp;
+        } else if (max->tfIdfSum == cmp->tfIdfSum) {
+            int cmpstr = strcmp (max->filename, cmp->filename);
+            if (cmp < 0) {
+                max = cmp;
+            }
+        }
+        cmp = cmp->next;
+    }
+    return max;
 }
 
 double countFileName (FileList head) {
